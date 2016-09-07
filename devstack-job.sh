@@ -1,31 +1,22 @@
-if ENV['ZUUL_URL']
-    ZUUL_URL = ENV['ZUUL_URL']
-else
-    ZUUL_URL = 'https://git.openstack.org'
-end
+#!/bin/bash
+
+if [ -n $ZUUL_URL ]
+    export ZUUL_URL="https://git.openstack.org"
+fi
  
-if ENV['ZUUL_PROJECT']
-    ZUUL_PROJECT = ENV['ZUUL_PROJECT']
-else
-    ZUUL_PROJECT = 'openstack/oslo.messaging'
-end
+if [ -n $ZUUL_PROJECT ]
+    export ZUUL_PROJECT="openstack/oslo.messaging"
+fi
  
-if ENV['ZUUL_BRANCH']
-    ZUUL_BRANCH = ENV['ZUUL_BRANCH']
-else
-    ZUUL_BRANCH = 'master'
-end
+if [ -n $ZUUL_BRANCH ]
+    export ZUUL_BRANCH="master"
+fi
  
-if ENV['ZUUL_REF']
-    ZUUL_REF = ENV['ZUUL_REF']
-else
-    ZUUL_REF = 'HEAD'
-end
+if [ -n $ZUUL_REF ]
+    export ZUUL_REF="HEAD"
+fi
  
-if ENV['DEVSTACK_JOB']
-    DEVSTACK_JOB = ENV['DEVSTACK_JOB']
-else
-    DEVSTACK_JOB = <<JOB
+DEVSTACK_JOB = <<JOB
 export PYTHONUNBUFFERED=true
 export DEVSTACK_GATE_TEMPEST=1
 export DEVSTACK_GATE_TEMPEST_FULL=1
@@ -36,7 +27,6 @@ export DEVSTACK_LOCAL_CONFIG="enable_plugin devstack-plugin-amqp1 git://git.open
 cp devstack-gate/devstack-vm-gate-wrap.sh ./safe-devstack-vm-gate-wrap.sh
 ./safe-devstack-vm-gate-wrap.sh
 JOB
-end
     
 yum update
 curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
@@ -62,4 +52,4 @@ export ZUUL_PROJECT=#{ZUUL_PROJECT}
 export ZUUL_BRANCH=#{ZUUL_BRANCH}
 export ZUUL_REF=#{ZUUL_REF}
 
-exec 0<&- #{DEVSTACK_JOB}
+exec 0<&- ${DEVSTACK_JOB}
