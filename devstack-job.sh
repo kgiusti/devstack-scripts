@@ -1,20 +1,10 @@
 #!/bin/bash
 
-if [ -n $ZUUL_URL ]
-    export ZUUL_URL="https://git.openstack.org"
-fi
- 
-if [ -n $ZUUL_PROJECT ]
-    export ZUUL_PROJECT="openstack/oslo.messaging"
-fi
- 
-if [ -n $ZUUL_BRANCH ]
-    export ZUUL_BRANCH="master"
-fi
- 
-if [ -n $ZUUL_REF ]
-    export ZUUL_REF="HEAD"
-fi
+
+export ZUUL_URL="https://git.openstack.org"
+export ZUUL_PROJECT="openstack/oslo.messaging"
+export ZUUL_BRANCH="master"
+export ZUUL_REF="HEAD"
  
 DEVSTACK_JOB = <<JOB
 export PYTHONUNBUFFERED=true
@@ -47,9 +37,4 @@ mkdir -p "$WORKSPACE"
 cd $WORKSPACE
 git clone --depth 1 https://git.openstack.org/openstack-infra/devstack-gate
  
-export ZUUL_URL=#{ZUUL_URL}
-export ZUUL_PROJECT=#{ZUUL_PROJECT}
-export ZUUL_BRANCH=#{ZUUL_BRANCH}
-export ZUUL_REF=#{ZUUL_REF}
-
 exec 0<&- ${DEVSTACK_JOB}
