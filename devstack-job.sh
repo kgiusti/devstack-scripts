@@ -19,11 +19,8 @@ export OVERRIDE_ZUUL_BRANCH="default"
 #./safe-devstack-vm-gate-wrap.sh
 #JOB
     
-yum update
 curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
 python get-pip.py
-yum -y install git
-yum -y install emacs
 pip install tox
 
 ssh-keygen -N "" -t rsa -f /root/.ssh/id_rsa
