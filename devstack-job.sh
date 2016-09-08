@@ -5,18 +5,19 @@ export ZUUL_URL="https://git.openstack.org"
 export ZUUL_PROJECT="openstack/oslo.messaging"
 export ZUUL_BRANCH="master"
 export ZUUL_REF="HEAD"
+export OVERRIDE_ZUUL_BRANCH="default"
  
-DEVSTACK_JOB = <<JOB
-export PYTHONUNBUFFERED=true
-export DEVSTACK_GATE_TEMPEST=1
-export DEVSTACK_GATE_TEMPEST_FULL=1
-export DEVSTACK_GATE_NEUTRON=1
-export PROJECTS="openstack/devstack-plugin-amqp1 $PROJECTS"
-export DEVSTACK_LOCAL_CONFIG="enable_plugin devstack-plugin-amqp1 git://git.openstack.org/openstack/devstack-plugin-amqp1"
- export DEVSTACK_PROJECT_FROM_GIT="oslo.messaging"
-cp devstack-gate/devstack-vm-gate-wrap.sh ./safe-devstack-vm-gate-wrap.sh
-./safe-devstack-vm-gate-wrap.sh
-JOB
+#DEVSTACK_JOB = <<JOB
+#export PYTHONUNBUFFERED=true
+#export DEVSTACK_GATE_TEMPEST=1
+#export DEVSTACK_GATE_TEMPEST_FULL=1
+#export DEVSTACK_GATE_NEUTRON=1
+#export PROJECTS="openstack/devstack-plugin-amqp1 $PROJECTS"
+#export DEVSTACK_LOCAL_CONFIG="enable_plugin devstack-plugin-amqp1 git://git.openstack.org/openstack/devstack-plugin-amqp1"
+# export DEVSTACK_PROJECT_FROM_GIT="oslo.messaging"
+#cp devstack-gate/devstack-vm-gate-wrap.sh ./safe-devstack-vm-gate-wrap.sh
+#./safe-devstack-vm-gate-wrap.sh
+#JOB
     
 yum update
 curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
@@ -37,4 +38,16 @@ mkdir -p "$WORKSPACE"
 cd $WORKSPACE
 git clone --depth 1 https://git.openstack.org/openstack-infra/devstack-gate
  
-exec 0<&- ${DEVSTACK_JOB}
+ 
+export PYTHONUNBUFFERED=true
+export DEVSTACK_GATE_TEMPEST=1
+export DEVSTACK_GATE_TEMPEST_FULL=1
+export DEVSTACK_GATE_NEUTRON=1
+export PROJECTS="openstack/devstack-plugin-amqp1 $PROJECTS"
+export DEVSTACK_LOCAL_CONFIG="enable_plugin devstack-plugin-amqp1 git://git.openstack.org/openstack/devstack-plugin-amqp1"
+export DEVSTACK_PROJECT_FROM_GIT="oslo.messaging"
+cp devstack-gate/devstack-vm-gate-wrap.sh ./safe-devstack-vm-gate-wrap.sh
+./safe-devstack-vm-gate-wrap.sh
+
+
+#exec 0<&- ${DEVSTACK_JOB}
