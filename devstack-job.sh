@@ -5,7 +5,7 @@ export ZUUL_URL="https://git.openstack.org"
 export ZUUL_PROJECT="openstack/oslo.messaging"
 export ZUUL_BRANCH="master"
 export ZUUL_REF="HEAD"
-export OVERRIDE_ZUUL_BRANCH="default"
+export OVERRIDE_ZUUL_BRANCH="master"
  
 #DEVSTACK_JOB = <<JOB
 #export PYTHONUNBUFFERED=true
