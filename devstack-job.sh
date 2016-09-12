@@ -1,24 +1,17 @@
 #!/bin/bash
 
-
 export ZUUL_URL="https://git.openstack.org"
 export ZUUL_PROJECT="openstack/oslo.messaging"
 export ZUUL_BRANCH="master"
 export ZUUL_REF="HEAD"
 export OVERRIDE_ZUUL_BRANCH="master"
  
-#DEVSTACK_JOB = <<JOB
-#export PYTHONUNBUFFERED=true
-#export DEVSTACK_GATE_TEMPEST=1
-#export DEVSTACK_GATE_TEMPEST_FULL=1
-#export DEVSTACK_GATE_NEUTRON=1
-#export PROJECTS="openstack/devstack-plugin-amqp1 $PROJECTS"
-#export DEVSTACK_LOCAL_CONFIG="enable_plugin devstack-plugin-amqp1 git://git.openstack.org/openstack/devstack-plugin-amqp1"
-# export DEVSTACK_PROJECT_FROM_GIT="oslo.messaging"
-#cp devstack-gate/devstack-vm-gate-wrap.sh ./safe-devstack-vm-gate-wrap.sh
-#./safe-devstack-vm-gate-wrap.sh
-#JOB
-    
+#yum -y group install "Development Tools"
+#yum -y install libffi_devel
+#yum -y install openssl_devel
+#yum -y install python_devel
+#yum -y update
+
 curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
 python get-pip.py
 pip install tox
@@ -40,11 +33,12 @@ export PYTHONUNBUFFERED=true
 export DEVSTACK_GATE_TEMPEST=1
 export DEVSTACK_GATE_TEMPEST_FULL=1
 export DEVSTACK_GATE_NEUTRON=1
+
 export PROJECTS="openstack/devstack-plugin-amqp1 $PROJECTS"
 export DEVSTACK_LOCAL_CONFIG="enable_plugin devstack-plugin-amqp1 git://git.openstack.org/openstack/devstack-plugin-amqp1"
-export DEVSTACK_PROJECT_FROM_GIT="oslo.messaging"
+
+#export DEVSTACK_PROJECT_FROM_GIT="oslo.messaging"
+
 cp devstack-gate/devstack-vm-gate-wrap.sh ./safe-devstack-vm-gate-wrap.sh
+
 ./safe-devstack-vm-gate-wrap.sh
-
-
-#exec 0<&- ${DEVSTACK_JOB}
