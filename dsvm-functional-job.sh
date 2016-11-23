@@ -11,12 +11,25 @@ apt-get install -y libffi-dev
 apt-get install -y libssl-dev
 apt-get install -y python-dev
 apt-get install -y curl
+apt-get install -y sasl2-bin
 
-curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+add-apt-repository -y ppa:qpid/testing
+apt-get update -y
+apt-get install -y qpidd
 
 curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
 python get-pip.py
 pip install tox
 pip install pyngus
 
-#./safe-devstack-vm-gate-wrap.sh
+#cd ../
+#git clone https://git.openstack.org/openstack/oslo.messaging
+#cd oslo.messaging
+#tox -epy27 --notest
+#source .tox/py27/bin/activate
+#export TRANSPORT_URL=amqp://stackqpid:secretqpid@127.0.0.1:65123//
+#export AMQP1_BACKEND=qpidd
+#./setup-test-env-amqp1.sh python setup.py testr --slowest --testr-args='oslo_messaging.tests.functional'
+
+
+#synaptic package manager

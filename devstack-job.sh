@@ -27,8 +27,10 @@ export WORKSPACE=/home/jenkins/workspace/testing
 mkdir -p "$WORKSPACE"
 cd $WORKSPACE
 git clone --depth 1 https://git.openstack.org/openstack-infra/devstack-gate
- 
- 
+
+# for lt environment, need lots more time (4 hrs should be enough, in ms)
+export BUILD_TIMEOUT=14400000
+
 export PYTHONUNBUFFERED=true
 export DEVSTACK_GATE_TEMPEST=1
 export DEVSTACK_GATE_TEMPEST_FULL=1
@@ -37,6 +39,11 @@ export DEVSTACK_GATE_NEUTRON=1
 export PROJECTS="openstack/devstack-plugin-amqp1 $PROJECTS"
 export DEVSTACK_LOCAL_CONFIG="enable_plugin devstack-plugin-amqp1 git://git.openstack.org/openstack/devstack-plugin-amqp1"
 
+#export DEVSTACK_LOCAL_CONFIG+=$'\n'"AMQP1_USERNAME=queueuser"
+#export DEVSTACK_LOCAL_CONFIG+=$'\n'"AMQP1_USERNAME=queuepassword"
+#export DEVSTACK_LOCAL_CONFIG+=$'\n'"AMQP1_SERVICE=qdr"
+
+# do we need this?
 #export DEVSTACK_PROJECT_FROM_GIT="oslo.messaging"
 
 cp devstack-gate/devstack-vm-gate-wrap.sh ./safe-devstack-vm-gate-wrap.sh

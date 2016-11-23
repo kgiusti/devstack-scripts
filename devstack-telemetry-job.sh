@@ -21,7 +21,9 @@ export WORKSPACE=/home/jenkins/workspace/testing
 mkdir -p "$WORKSPACE"
 cd $WORKSPACE
 git clone --depth 1 https://git.openstack.org/openstack-infra/devstack-gate
- 
+
+# for lt environment, need lots more time (4 hrs should be enough, in ms)
+export BUILD_TIMEOUT=14400000
 
 export PYTHONUNBUFFERED=true
 
@@ -51,7 +53,11 @@ export DEVSTACK_LOCAL_CONFIG+=$'\n'"GNOCCHI_STORAGE_BACKEND=file"
 
 export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin devstack-plugin-{plugin} git://git.openstack.org/openstack/devstack-plugin-{plugin}"
 
-export DEVSTACK_PROJECT_FROM_GIT="oslo.messaging"
+#export DEVSTACK_LOCAL_CONFIG+=$'\n'"AMQP1_USERNAME=queueuser"
+#export DEVSTACK_LOCAL_CONFIG+=$'\n'"AMQP1_USERNAME=queuepassword"
+#export DEVSTACK_LOCAL_CONFIG+=$'\n'"AMQP1_SERVICE=qdr"
+
+#export DEVSTACK_PROJECT_FROM_GIT="oslo.messaging"
 
 function post_test_hook {{
     cd /opt/stack/new/ceilometer/ceilometer/tests/integration/hooks/
