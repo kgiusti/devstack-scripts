@@ -1,21 +1,25 @@
 #!/bin/bash
 
-
-#yum -y group install "Development Tools"
-#yum -y install libffi_devel
-#yum -y install openssl_devel
-#yum -y install python_devel
-#yum -y update
-
-apt-get install -y libffi-dev
-apt-get install -y libssl-dev
-apt-get install -y python-dev
-apt-get install -y curl
-apt-get install -y sasl2-bin
-
-add-apt-repository -y ppa:qpid/testing
-apt-get update -y
-apt-get install -y qpidd
+if [ - x "$(command -v yum)" ]; then
+    yum -y group install "Development Tools"
+    yum -y install libffi_devel
+    yum -y install openssl_devel
+    yum -y install python_devel
+    yum -y install curl
+    yum -y install cyrus-sasl-lib
+    yum -y install cyrus-sasl-plain
+    yum -y install qpid-cpp-server
+    yum -y update
+else
+    apt-get install -y libffi-dev
+    apt-get install -y libssl-dev
+    apt-get install -y python-dev
+    apt-get install -y curl
+    apt-get install -y sasl2-bin
+    add-apt-repository -y ppa:qpid/testing
+    apt-get update -y
+    apt-get install -y qpidd
+fi
 
 curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
 python get-pip.py
