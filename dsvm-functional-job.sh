@@ -26,14 +26,14 @@ python get-pip.py
 pip install tox
 pip install pyngus
 
-#cd ../
-#git clone https://git.openstack.org/openstack/oslo.messaging
-#cd oslo.messaging
-#tox -epy27 --notest
-#source .tox/py27/bin/activate
-#export TRANSPORT_URL=amqp://stackqpid:secretqpid@127.0.0.1:65123//
-#export AMQP1_BACKEND=qpidd
-#./setup-test-env-amqp1.sh python setup.py testr --slowest --testr-args='oslo_messaging.tests.functional'
+cd ../
+git clone https://git.openstack.org/openstack/oslo.messaging
+cd oslo.messaging
+tox -epy27 --notest
+source .tox/py27/bin/activate
+export TRANSPORT_URL=amqp://stackqpid:secretqpid@127.0.0.1:65123//
+export AMQP1_BACKEND=qpidd
+./setup-test-env-amqp1.sh python setup.py testr --slowest --testr-args='oslo_messaging.tests.functional'
 
 
 #synaptic package manager
