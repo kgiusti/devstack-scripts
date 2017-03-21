@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# set -x
+
 export ZUUL_URL="https://git.openstack.org"
 export ZUUL_PROJECT="openstack/oslo.messaging"
 export ZUUL_BRANCH="master"
@@ -21,7 +23,7 @@ KEY_CONTENTS=$(cat /root/.ssh/id_rsa.pub | awk '{print $2}' )
 git clone https://git.openstack.org/openstack-infra/system-config /opt/system-config
 /opt/system-config/install_puppet.sh
 /opt/system-config/install_modules.sh
-puppet apply --modulepath=/opt/system-config/modules:/etc/puppet/modules -e 'class { openstack_project::single_use_slave: install_users => false,   enable_unbound => true, ssh_key => \"$KEY_CONTENTS\" }'
+puppet apply --verbose --modulepath=/opt/system-config/modules:/etc/puppet/modules -e 'class { openstack_project::single_use_slave: install_users => false,   enable_unbound => true, ssh_key => "${KEY_CONTENTS}" }'
 echo "jenkins ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/jenkins
 export WORKSPACE=/home/jenkins/workspace/testing
 mkdir -p "$WORKSPACE"
@@ -34,10 +36,11 @@ export BUILD_TIMEOUT=14400000
 export PYTHONUNBUFFERED=true
 export DEVSTACK_GATE_TEMPEST=1
 export DEVSTACK_GATE_TEMPEST_FULL=1
-export DEVSTACK_GATE_NEUTRON=1
+#export DEVSTACK_GATE_NEUTRON=1
 
-export PROJECTS="openstack/devstack-plugin-amqp1 $PROJECTS"
+export PROJECTS="openstack/devstack-plugin-amqp1 openstack/oslo.messaging $PROJECTS"
 export DEVSTACK_LOCAL_CONFIG="enable_plugin devstack-plugin-amqp1 git://git.openstack.org/openstack/devstack-plugin-amqp1"
+export DEVSTACK_LOCAL_CONFIG+=$'\n'"LIBS_FROM_GIT=oslo.messaging"
 
 #export DEVSTACK_LOCAL_CONFIG+=$'\n'"AMQP1_USERNAME=queueuser"
 #export DEVSTACK_LOCAL_CONFIG+=$'\n'"AMQP1_USERNAME=queuepassword"
