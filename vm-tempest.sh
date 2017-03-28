@@ -52,10 +52,10 @@ export BUILD_TIMEOUT=14400000
 export PYTHONUNBUFFERED=true
 export DEVSTACK_GATE_TEMPEST=1
 export DEVSTACK_GATE_TEMPEST_FULL=1
-export PROJECTS="openstack/oslo.messaging $PROJECTS"
-# export PROJECTS="openstack/devstack-plugin-amqp1 openstack/oslo.messaging $PROJECTS"
-export DEVSTACK_LOCAL_CONFIG="LIBS_FROM_GIT=oslo.messaging"
-#export DEVSTACK_LOCAL_CONFIG="enable_plugin devstack-plugin-amqp1 git://git.openstack.org/openstack/devstack-plugin-amqp1"
+export PROJECTS="openstack/devstack-plugin-amqp1 openstack/oslo.messaging $PROJECTS"
+export DEVSTACK_LOCAL_CONFIG="enable_plugin devstack-plugin-amqp1 git://git.openstack.org/openstack/devstack-plugin-amqp1"
+export DEVSTACK_LOCAL_CONFIG+=$'\n'"LIBS_FROM_GIT=oslo.messaging"
+
 cp devstack-gate/devstack-vm-gate-wrap.sh ./safe-devstack-vm-gate-wrap.sh
 ./safe-devstack-vm-gate-wrap.sh
 
