@@ -19,6 +19,15 @@
 
 set -x
 
+function die {
+    local exitcode=$?
+    local msg="[ERROR] $1"
+    echo $msg 1>&2
+    exit $exitcode
+}
+
+[ "$(whoami)" == "root" ] || die "must be run as root"
+cd
 DEBIAN_FRONTEND=noninteractive apt-get --assume-yes install -y git python-pip python-tox python3-yaml
 ssh-keygen -N "" -t rsa -f /root/.ssh/id_rsa
 
