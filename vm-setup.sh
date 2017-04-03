@@ -38,6 +38,16 @@ system-config/install_puppet.sh && system-config/install_modules.sh
 KEY_CONTENTS=$(cat /root/.ssh/id_rsa.pub | awk '{print $2}' )
 puppet apply --verbose --modulepath=/root/system-config/modules:/etc/puppet/modules -e 'class { openstack_project::single_use_slave: install_users => false, enable_unbound => true, ssh_key => "${KEY_CONTENTS}" }'
 
+# break the resolv.conf link
+cp /etc/resolv.conf ~/resolv.conf
+rm -f /etc/resolv.conf
+cp ~/resolv.conf /etc
+DNS1="10.11.5.19"
+DNS2="10.5.30.160"
+echo "nameserver $(DNS1)" >> /etc/resolv.conf
+echo "nameserver $(DNS2)" >> /etc/resolv.conf
+
+
 # create the jenkins user
 useradd -m jenkins
 echo -e "password\npassword" | passwd jenkins
