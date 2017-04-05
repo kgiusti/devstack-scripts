@@ -17,6 +17,8 @@ set -x
 whoami
 rpm -qa
 ip address show
-virsh list
+virsh list --all
 sudo ls
+df -h
+
 
