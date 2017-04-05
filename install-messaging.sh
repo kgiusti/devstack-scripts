@@ -29,8 +29,8 @@ make -j2 install
 cd proton-c/bindings/python/dist
 python setup.py build sdist
 cd dist
-pip install ./python-qpid-proton*
-cd $(_CDIR)
+pip install ./python-qpid-proton-*.tar.gz
+cd $_CDIR
 
 # install qpidd, listening on ports 5672/5671:
 git clone https://git-wip-us.apache.org/repos/asf/qpid-cpp.git
@@ -49,7 +49,7 @@ log-to-syslog=yes
 max-connections=0
 EOF
 qpidd -d
-cd $(_CDIR)
+cd $_CDIR
 
 # install qdrouterd, listening on port 15672:
 git clone https://git-wip-us.apache.org/repos/asf/qpid-dispatch.git
@@ -107,4 +107,4 @@ log {
 }
 EOF
 PYTHONPATH="/usr/lib/python2.7/site-packages:$PYTHONPATH" qdrouterd -d
-cd $(_CDIR)
+cd $_CDIR
