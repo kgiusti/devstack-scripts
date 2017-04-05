@@ -15,10 +15,14 @@
 
 set -x
 whoami
-rpm -qa
-ip address show
-virsh list --all
-sudo ls
 df -h
+cat /etc/resolv.conf
+#rpm -qa
+ip address show
+sudo virsh list --all
+sudo virsh net-list --all
+sudo virsh net-dumpxml default
+
+
 
 
