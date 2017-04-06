@@ -14,6 +14,7 @@
 #
 
 set -x
+uname -a
 whoami
 df -h
 cat /etc/resolv.conf
