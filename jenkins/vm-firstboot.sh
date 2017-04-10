@@ -39,12 +39,12 @@ DEBIAN_FRONTEND=noninteractive apt-get --assume-yes install -y git python-pip py
 # configure system as a openstack single-use slave,
 # see http://git.openstack.org/cgit/openstack-infra/devstack-gate/tree/README.rst
 #
-git clone https://git.openstack.org/openstack-infra/system-config
-system-config/install_puppet.sh && system-config/install_modules.sh
-ssh-keygen -N "" -t rsa -f /root/.ssh/id_rsa
-KEY_CONTENTS=$(cat /root/.ssh/id_rsa.pub | awk '{print $2}' )
-puppet apply --verbose --modulepath=/root/system-config/modules:/etc/puppet/modules \
-       -e 'class { openstack_project::single_use_slave: install_users => false, enable_unbound => true, ssh_key => "${KEY_CONTENTS}" }'
+##git clone https://git.openstack.org/openstack-infra/system-config
+##system-config/install_puppet.sh && system-config/install_modules.sh
+##ssh-keygen -N "" -t rsa -f /root/.ssh/id_rsa
+##KEY_CONTENTS=$(cat /root/.ssh/id_rsa.pub | awk '{print $2}' )
+##puppet apply --verbose --modulepath=/root/system-config/modules:/etc/puppet/modules \
+##       -e 'class { openstack_project::single_use_slave: install_users => false, enable_unbound => true, ssh_key => "${KEY_CONTENTS}" }'
 
 # # break the resolv.conf link
 # cp /etc/resolv.conf ~/resolv.conf

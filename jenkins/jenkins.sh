@@ -19,16 +19,18 @@
 # 3) Run the devstack gate in the tempest VM
 
 set -x
+set -e
 
-${VM_NAME:=tempest_vm}
-${DISTRO:=ubuntu-16.04}
-${DISK_SIZE:=8G}
-${ROOT_PW:=password}
-${MEMSIZE_MB:=4000}   # 4GB
-${V_CPUS:=4}    # virtual CPUs for the VM
+VM_NAME=${VM_NAME:-tempest_vm}
+DISTRO=${DISTRO:-ubuntu-16.04}
+DISK_SIZE=${DISK_SIZE:-8G}
+ROOT_PW=${ROOT_PW:-password}
+MEMSIZE_MB=${MEMSIZE_MB:-4000}   # 4GB
+V_CPUS=${V_CPUS:-4}    # virtual CPUs for the VM
 
 
 function cleanup {
+    set +e
     virsh destroy $VM_NAME
     virsh undefine --remove-all-storage $VM_NAME
 }
@@ -42,11 +44,11 @@ mkdir -p ${PWD}/_build
 # configure pam to allow logins without passwords
 # Hack the interfaces file since it uses the wrong device name (bug?)
 # Boot to console device
+#   edit /etc/network/interfaces:s/ens2/ens3/
 cat > ${PWD}/_build/build-image <<-EOF
-    edit '/etc/pam.d/common-auth:s/nullok_secure/nullok/'
-    edit '/etc/network/interfaces:s/ens2/ens3/'
-    edit '/etc/default/grub:s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="console=tty0 console=ttyS0,115200n8"/' \
-    run-command update-grub
+edit /etc/pam.d/common-auth:s/nullok_secure/nullok/
+edit /etc/default/grub:s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="console=tty0 console=ttyS0,115200n8"/
+run-command update-grub
 EOF
 
 virt-builder ${DISTRO} \
@@ -54,9 +56,8 @@ virt-builder ${DISTRO} \
              --hostname $VM_NAME \
              --root-password password:${ROOT_PW} \
              --size ${DISK_SIZE} \
-             --verbose \
              --firstboot  ${PWD}/vm-firstboot.sh \
-             --command-from-file ${PWD}/_build/build-image
+             --commands-from-file ${PWD}/_build/build-image
 
 # create the VM
 #  the vm-firstboot.sh script is invoked on first boot
@@ -67,16 +68,8 @@ virt-install --name $VM_NAME \
              --virt-type kvm \
              --cpu host \
              --vcpus ${V_CPUS} \
-             --graphics none \
-             --noautoconsole
+             --graphics none
 
-
-
-
-
-
-
-
-
+/usr/bin/virsh start $VM_NAME
 
 
