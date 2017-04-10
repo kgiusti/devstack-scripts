@@ -1,0 +1,39 @@
+#!/bin/bash
+
+
+
+
+
+
+
+#ExecStart=-/sbin/agetty -a root --keep-baud 115200,38400,9600 %I $TERM
+# /etc/systemd/system/serial-getty@ttyS0.service.d/override.conf
+#  [Service]
+#  ExecStart=
+#   ExecStart=-/sbin/agetty -a root --keep-baud 115200,38400,9600 %I $TERM
+# systemctl daemon-reload
+#  sed '$ a This is the last line' sedtest.txt
+
+virt-builder ubuntu-16.04 \
+             -o /home/kgiusti/tmp/$VM_NAME.img \
+             --hostname $VM_NAME \
+             --root-password password:password \
+             --size 8G \
+             --edit '/etc/pam.d/common-auth:s/nullok_secure/nullok/' \
+             --edit '/etc/network/interfaces:s/ens2/ens3/' \
+             --edit '/etc/default/grub:s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="console=tty0 console=ttyS0,115200n8"/' \
+             --run-command update-grub 
+#             --run-command 'shutdown -t now'
+
+sudo virt-install --name $VM_NAME \
+     --import \
+     --memory 4000 \
+     --disk path=/home/kgiusti/tmp/$VM_NAME.img,format=raw \
+     --virt-type kvm \
+     --cpu host \
+     --vcpus 4 \
+     --graphics none \
+     --noautoconsole
+
+
+sudo virt-clone --original $VM_NAME --auto-clone 
