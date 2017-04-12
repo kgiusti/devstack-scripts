@@ -27,9 +27,6 @@ function die {
     exit $exitcode
 }
 
-[ "$(whoami)" == "jenkins" ] || die "must be run as user 'jenkins'"
-[ -e "/VM-SETUP" ] || die "you must run vm-setup.sh as root first"
-
 export REPO_URL=https://git.openstack.org
 export ZUUL_URL=/home/jenkins/workspace-cache
 export ZUUL_REF=HEAD

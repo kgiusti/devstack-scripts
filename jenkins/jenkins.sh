@@ -19,13 +19,12 @@
 # 3) Run the devstack gate in the tempest VM
 
 set -x
-set -e
 
 VM_NAME=${VM_NAME:-tempest_vm}
 DISTRO=${DISTRO:-ubuntu-16.04}
-DISK_SIZE=${DISK_SIZE:-8G}
+DISK_SIZE=${DISK_SIZE:-16G}
 ROOT_PW=${ROOT_PW:-password}
-MEMSIZE_MB=${MEMSIZE_MB:-4000}   # 4GB
+MEMSIZE_MB=${MEMSIZE_MB:-8000}   # 8GB
 V_CPUS=${V_CPUS:-4}    # virtual CPUs for the VM
 
 
@@ -33,7 +32,14 @@ function cleanup {
     set +e
     virsh destroy $VM_NAME
     virsh undefine --remove-all-storage $VM_NAME
+    set -e
 }
+
+# ensure that no stale VM has been left over,
+# and cleanup
+cleanup
+trap cleanup ERR EXIT
+set -e
 
 mkdir -p ${PWD}/_build
 
@@ -41,12 +47,19 @@ mkdir -p ${PWD}/_build
 # build a disk for the VM
 #
 
-# configure pam to allow logins without passwords
-# Hack the interfaces file since it uses the wrong device name (bug?)
-# Boot to console device
-#   edit /etc/network/interfaces:s/ens2/ens3/
+# Commands to configure the filesystem
+# Run after the disk is built (before booting)
 cat > ${PWD}/_build/build-image <<-EOF
+update
+copy-in ${PWD}/vm-run-tempest.sh:/usr/bin
+chmod 0755:/usr/bin/vm-run-tempest.sh
+# bugfix: overwrite insane /etc/hosts file
+edit /etc/hosts:s/unassigned-hostname/localhost/
+edit /etc/hosts:s/unassigned-domain/localdomain/
+edit /etc/hosts:s/^::1[ \t]*localhost /::1 localhost6 /
+# Allow login without passwords
 edit /etc/pam.d/common-auth:s/nullok_secure/nullok/
+# Add console to kernel
 edit /etc/default/grub:s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="console=tty0 console=ttyS0,115200n8"/
 run-command update-grub
 EOF
@@ -60,7 +73,7 @@ virt-builder ${DISTRO} \
              --commands-from-file ${PWD}/_build/build-image
 
 # create the VM
-#  the vm-firstboot.sh script is invoked on first boot
+# the vm-firstboot.sh script is invoked on first boot
 virt-install --name $VM_NAME \
              --import \
              --memory ${MEMSIZE_MB} \
@@ -68,8 +81,11 @@ virt-install --name $VM_NAME \
              --virt-type kvm \
              --cpu host \
              --vcpus ${V_CPUS} \
-             --graphics none
+             --graphics none \
+             --os-variant ubuntu15.10
 
-/usr/bin/virsh start $VM_NAME
+virsh start $VM_NAME
+sleep 5
+${PWD}/vm-run-command.py --name $VM_NAME "su --login --command /usr/bin/vm-run-tempest.sh jenkins"
 
 

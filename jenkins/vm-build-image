@@ -22,8 +22,8 @@ virt-builder ubuntu-16.04 \
              --edit '/etc/pam.d/common-auth:s/nullok_secure/nullok/' \
              --edit '/etc/network/interfaces:s/ens2/ens3/' \
              --edit '/etc/default/grub:s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="console=tty0 console=ttyS0,115200n8"/' \
-             --run-command update-grub 
-#             --run-command 'shutdown -t now'
+             --run-command update-grub
+
 
 sudo virt-install --name $VM_NAME \
      --import \

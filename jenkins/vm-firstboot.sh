@@ -13,38 +13,137 @@
 #    under the License.
 #
 
-# This script configures a VM to run the devstack-gate
-# Run once at initial VM boot via the virt-install command
+# This script configures a VM to run the devstack-gate. It is run once
+# under root at initial VM boot via the virt-install command
 
 set -x
 
-# create an auto login console for root access
+export DEBIAN_FRONTEND=noninteractive
+
 #
-mkdir -p /etc/systemd/system/serial-getty@ttyS0.service.d
-cat > /etc/systemd/system/serial-getty@ttyS0.service.d/override.conf <<-EOF
-    [Service]
-    ExecStart=
-    ExecStart=-/sbin/agetty -a root --keep-baud 115200,38400,9600 %I $TERM
+# Install the latest for qpidd, dispatch, and proton
+#
+set +e
+apt-get -y purge  '.*qpid-proton.*' '^libqpid.*' '^qpidd.*' '^qdrouter.*'
+set -e
+
+## KAG: Disabled until we fix the amqp1 devstack plugin to allow external message bus
+
+apt-get -y install git gcc cmake libssl-dev libsasl2-dev swig python-dev python-pip \
+        g++  pkg-config ruby libboost-dev libboost-program-options-dev \
+        libboost-filesystem-dev libboost-all-dev libboost-system-dev \
+        uuid-dev libnss3-dev sasl2-bin python-tox python3-yaml
+
+if false; then
+
+
+# Install proton:
+cd /root
+git clone https://git-wip-us.apache.org/repos/asf/qpid-proton.git
+cd qpid-proton
+mkdir BUILD
+cd BUILD
+cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+make -j4 install
+cd proton-c/bindings/python/dist
+python setup.py build sdist
+cd dist
+pip install ./python-qpid-proton-*.tar.gz
+
+# install qpidd, listening on ports 5672/5671:
+cd /root
+git clone https://git-wip-us.apache.org/repos/asf/qpid-cpp.git
+cd qpid-cpp
+mkdir BUILD
+cd BUILD
+cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+make -j4 install
+cat <<EOF | tee /usr/etc/qpid/qpidd.conf
+auth=no
+queue-patterns=exclusive
+queue-patterns=unicast
+topic-patterns=broadcast
+log-enable=info+
+log-to-syslog=yes
+max-connections=0
 EOF
+##qpidd -d
 
-#ExecStart=-/sbin/agetty -a root --keep-baud 115200,38400,9600 %I $TERM
-# /etc/systemd/system/serial-getty@ttyS0.service.d/override.conf
-#  [Service]
-#  ExecStart=
-#   ExecStart=-/sbin/agetty -a root --keep-baud 115200,38400,9600 %I $TERM
 
-cd
-DEBIAN_FRONTEND=noninteractive apt-get --assume-yes install -y git python-pip python-tox python3-yaml
+# install qdrouterd, listening on port 15672:
+cd /root
+git clone https://git-wip-us.apache.org/repos/asf/qpid-dispatch.git
+cd qpid-dispatch
+mkdir BUILD
+cd BUILD
+cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+make -j4 install
+
+cat <<EOF | tee /etc/qpid-dispatch/qdrouterd.conf
+router {
+    mode: standalone
+    id: Router.A
+}
+
+listener {
+    addr: 0.0.0.0
+    port: 15672
+    authenticatePeer: no
+}
+
+address {
+    prefix: openstack.org/om/rpc/multicast
+    distribution: multicast
+}
+
+address {
+    prefix: openstack.org/om/rpc/unicast
+    distribution: closest
+}
+
+address {
+    prefix: openstack.org/om/rpc/anycast
+    distribution: balanced
+}
+
+address {
+    prefix: openstack.org/om/notify/multicast
+    distribution: multicast
+}
+
+address {
+    prefix: openstack.org/om/notify/unicast
+    distribution: closest
+}
+
+address {
+    prefix: openstack.org/om/notify/anycast
+    distribution: balanced
+}
+
+log {
+    module: DEFAULT
+    enable: info+
+}
+EOF
+#PYTHONPATH="/usr/lib/python2.7/site-packages:$PYTHONPATH" qdrouterd -d
+#cd
+
+
+### KAG FIXME:
+fi
 
 # configure system as a openstack single-use slave,
 # see http://git.openstack.org/cgit/openstack-infra/devstack-gate/tree/README.rst
 #
-##git clone https://git.openstack.org/openstack-infra/system-config
-##system-config/install_puppet.sh && system-config/install_modules.sh
-##ssh-keygen -N "" -t rsa -f /root/.ssh/id_rsa
-##KEY_CONTENTS=$(cat /root/.ssh/id_rsa.pub | awk '{print $2}' )
-##puppet apply --verbose --modulepath=/root/system-config/modules:/etc/puppet/modules \
-##       -e 'class { openstack_project::single_use_slave: install_users => false, enable_unbound => true, ssh_key => "${KEY_CONTENTS}" }'
+
+cd /root
+git clone https://git.openstack.org/openstack-infra/system-config
+system-config/install_puppet.sh && system-config/install_modules.sh
+ssh-keygen -N "" -t rsa -f /root/.ssh/id_rsa
+KEY_CONTENTS=$(cat /root/.ssh/id_rsa.pub | awk '{print $2}' )
+puppet apply --verbose --modulepath=/root/system-config/modules:/etc/puppet/modules \
+       -e 'class { openstack_project::single_use_slave: install_users => false, ssh_key => "${KEY_CONTENTS}" }'
 
 # # break the resolv.conf link
 # cp /etc/resolv.conf ~/resolv.conf
@@ -55,10 +154,22 @@ DEBIAN_FRONTEND=noninteractive apt-get --assume-yes install -y git python-pip py
 # echo "nameserver $(DNS1)" >> /etc/resolv.conf
 # echo "nameserver $(DNS2)" >> /etc/resolv.conf
 
+#
+# create an auto login console for root access
+#
+
+mkdir -p /etc/systemd/system/serial-getty@ttyS0.service.d
+cat > /etc/systemd/system/serial-getty@ttyS0.service.d/override.conf <<-EOF
+    [Service]
+    ExecStart=
+    ExecStart=-/sbin/agetty -a root --keep-baud 115200,38400,9600 %I $TERM
+EOF
+
+
 # create the jenkins user
-useradd -m jenkins
-echo -e "password\npassword" | passwd jenkins
-echo "jenkins ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/jenkins
+#useradd -m jenkins
+#echo -e "password\npassword" | passwd jenkins
+#echo "jenkins ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/jenkins
 
 echo "Setup completed!  Shutting down..."
 shutdown -t now

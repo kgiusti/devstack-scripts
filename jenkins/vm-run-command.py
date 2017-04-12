@@ -25,6 +25,7 @@
 # '^Escape character is \^]'
 #
 
+import argparse
 import sys
 import re
 import logging
@@ -36,16 +37,16 @@ except ImportError:
     sys.stderr.write("ERROR: the required pexpect python package is not"
                      " installed\n")
     sys.stderr.write(" try: pip install pexpect or install your distro's\n"
-                     " pexpect package (usually python#-pexpect)\n")
+                     " pexpect package (usually pythonX-pexpect)\n")
     exit(-1)
 
 SUDO_PROMPT = re.compile('^\[sudo\] password for [^:]+:')
 VM_CONNECT = re.compile('Connected to domain \S+')
 VM_READY = re.compile('Escape character is \^]')
-VM_PROMPT = re.compile('[^@]+@TempestCI:[^#]+#')
 
-def sudo_login(vm, passwd):
-    rc = vm.expect([SUDO_PROMPT, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
+
+def sudo_login(vm, passwd, timeout=5):
+    rc = vm.expect([SUDO_PROMPT, pexpect.EOF, pexpect.TIMEOUT], timeout)
     if rc == 0:
         # SUDO_PROMPT
         logging.debug("SUDO_PROMPT")
@@ -58,6 +59,7 @@ def sudo_login(vm, passwd):
         logging.warn("No prompt for sudo - ignoring...")
         return True
 
+
 def wait_for_prompt(vm, regex, timeout=10):
     try:
         return vm.expect(regex, timeout=timeout)
@@ -67,6 +69,7 @@ def wait_for_prompt(vm, regex, timeout=10):
     except pexpect.TIMEOUT:
         logging.debug("TIMEOUT during prompt wait")
         return -1
+
 
 def wait_for_exit(vm, timeout=60, size=2048):
     while True:
@@ -81,39 +84,55 @@ def wait_for_exit(vm, timeout=60, size=2048):
 
 def main(argv):
 
-    try:
-        # oh yes, this is a terribly bad idea:
-        pw = os.environ['SUDO_PW']
-    except KeyError:
-        logging.error("Need password for SUDO! set SUDO_PW env var")
-        return -1
+    parser = argparse.ArgumentParser(
+        description='Execute a command on a VM console')
+    parser.add_argument("--name",
+                        default='tempest_vm',
+                        help="The name of the VM")
+    parser.add_argument("--timeout",
+                        type=int,
+                        default=30 * 60,
+                        help="inactivity timeout in seconds")
+    parser.add_argument("command",
+                        type=str,
+                        help="The command to execute on the VM")
 
-    # first start the VM
-    vm = pexpect.spawn('sudo', ['virsh', 'start', 'TempestCI-clone'],
-                        logfile=sys.stdout, encoding='utf8',
-                        timeout=60)
-    if not vm.isalive():
-        logging.error("Failed to spawn command")
-        return -1
-    if not sudo_login(vm, pw):
-        return -1
-    rc = wait_for_exit(vm, timeout=60 * 3)  # wait for boot to finish
-    if rc != 0:
-        # something failed
-        logging.error("The VM failed to start: return code=%d", rc)
-        return -1
+    args = parser.parse_args()
+
+    # try:
+    #     # oh yes, this is a terribly bad idea:
+    #     pw = os.environ['SUDO_PW']
+    # except KeyError:
+    #     logging.error("Need password for SUDO! set SUDO_PW env var")
+    #     return -1
+
+    # # first start the VM
+    # vm = pexpect.spawn('sudo', ['virsh', 'start', 'TempestCI-clone'],
+    #                     logfile=sys.stdout, encoding='utf8',
+    #                     timeout=60)
+    # if not vm.isalive():
+    #     logging.error("Failed to spawn command")
+    #     return -1
+    # if not sudo_login(vm, pw):
+    #     return -1
+    # rc = wait_for_exit(vm, timeout=60 * 3)  # wait for boot to finish
+    # if rc != 0:
+    #     # something failed
+    #     logging.error("The VM failed to start: return code=%d", rc)
+    #     return -1
 
     # login to the VM and run the tempest test script:
-    vm = pexpect.spawn('sudo', ['virsh', 'console', 'TempestCI-clone'],
+    vm = pexpect.spawn('virsh', ['console', args.name],
                        logfile=sys.stdout, encoding='utf8',
-                       timeout=60)
+                       timeout=args.timeout)
     if not vm.isalive():
         logging.error("Failed to spawn command")
-        return -1
-    if not sudo_login(vm, pw):
         return -1
 
     # wait for the console prompt
+
+    VM_PROMPT = re.compile('[^@]+@%s:[^#]+#' % args.name)
+
     while True:
         index = vm.expect_list([VM_CONNECT, VM_READY, VM_PROMPT,
                                 pexpect.EOF, pexpect.TIMEOUT],
@@ -137,8 +156,7 @@ def main(argv):
     #
     # Console is up - fire off the tempest script
     #
-    #vm.sendline("shutdown -t now")
-    vm.sendline("echo HI")
+    vm.sendline(args.command)
     wait_for_prompt(vm, VM_PROMPT)
     vm.sendline("shutdown -t now")
     wait_for_exit(vm)
