@@ -60,14 +60,14 @@ def sudo_login(vm, passwd, timeout=5):
         return True
 
 
-def wait_for_prompt(vm, regex, timeout=10):
+def wait_for_prompt(vm, regex, timeout=60):
     try:
         return vm.expect(regex, timeout=timeout)
     except pexpect.EOF:
         logging.debug("EOF during prompt wait")
         return -1
     except pexpect.TIMEOUT:
-        logging.debug("TIMEOUT during prompt wait")
+        logging.debug("Timed out during prompt wait")
         return -1
 
 
@@ -87,8 +87,11 @@ def main(argv):
     parser = argparse.ArgumentParser(
         description='Execute a command on a VM console')
     parser.add_argument("--name",
-                        default='tempest_vm',
+                        default='TempestVM',
                         help="The name of the VM")
+    parser.add_argument("--shutdown",
+                        action='store_true',
+                        help="force shutdown of VM after command completes")
     parser.add_argument("--timeout",
                         type=int,
                         default=30 * 60,
@@ -98,28 +101,6 @@ def main(argv):
                         help="The command to execute on the VM")
 
     args = parser.parse_args()
-
-    # try:
-    #     # oh yes, this is a terribly bad idea:
-    #     pw = os.environ['SUDO_PW']
-    # except KeyError:
-    #     logging.error("Need password for SUDO! set SUDO_PW env var")
-    #     return -1
-
-    # # first start the VM
-    # vm = pexpect.spawn('sudo', ['virsh', 'start', 'TempestCI-clone'],
-    #                     logfile=sys.stdout, encoding='utf8',
-    #                     timeout=60)
-    # if not vm.isalive():
-    #     logging.error("Failed to spawn command")
-    #     return -1
-    # if not sudo_login(vm, pw):
-    #     return -1
-    # rc = wait_for_exit(vm, timeout=60 * 3)  # wait for boot to finish
-    # if rc != 0:
-    #     # something failed
-    #     logging.error("The VM failed to start: return code=%d", rc)
-    #     return -1
 
     # login to the VM and run the tempest test script:
     vm = pexpect.spawn('virsh', ['console', args.name],
@@ -156,10 +137,19 @@ def main(argv):
     #
     # Console is up - fire off the tempest script
     #
+    logging.error("The setting for shutdown is: %s", args.shutdown)
     vm.sendline(args.command)
-    wait_for_prompt(vm, VM_PROMPT)
-    vm.sendline("shutdown -t now")
-    wait_for_exit(vm)
+    logging.error("WAITING")
+    wait_for_prompt(vm, VM_PROMPT, timeout=None)
+    logging.error("PROMPT")
+    logging.info("Command '%s' completed", args.command)
+    if args.shutdown:
+        logging.error("SHUTTINGDOWN")
+        vm.sendline("shutdown -t now")
+        wait_for_exit(vm)
+    else:
+        logging.error("EXITING")
+        vm.close()
     return 0
 
 

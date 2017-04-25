@@ -20,9 +20,10 @@
 
 set -x
 
-VM_NAME=${VM_NAME:-tempest_vm}
+#@todo(kgiusti): TempestVM hardcoded in vm-run-command.py
+VM_NAME=${VM_NAME:-TempestVM}
 DISTRO=${DISTRO:-ubuntu-16.04}
-DISK_SIZE=${DISK_SIZE:-16G}
+DISK_SIZE=${DISK_SIZE:-24G}
 ROOT_PW=${ROOT_PW:-password}
 MEMSIZE_MB=${MEMSIZE_MB:-8000}   # 8GB
 V_CPUS=${V_CPUS:-4}    # virtual CPUs for the VM
@@ -35,10 +36,9 @@ function cleanup {
     set -e
 }
 
-# ensure that no stale VM has been left over,
-# and cleanup
+# ensure that no stale VM has been left over...
 cleanup
-trap cleanup ERR EXIT
+##trap cleanup ERR
 set -e
 
 mkdir -p ${PWD}/_build
@@ -86,6 +86,7 @@ virt-install --name $VM_NAME \
 
 virsh start $VM_NAME
 sleep 5
-${PWD}/vm-run-command.py --name $VM_NAME "su --login --command /usr/bin/vm-run-tempest.sh jenkins"
+${PWD}/vm-run-command.py --name $VM_NAME --shutdown "su --login --command \"/usr/bin/vm-run-tempest.sh\" jenkins"
+##cleanup
 
 

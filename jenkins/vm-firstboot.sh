@@ -32,7 +32,10 @@ set -e
 apt-get -y install git gcc cmake libssl-dev libsasl2-dev swig python-dev python-pip \
         g++  pkg-config ruby libboost-dev libboost-program-options-dev \
         libboost-filesystem-dev libboost-all-dev libboost-system-dev \
-        uuid-dev libnss3-dev sasl2-bin python-tox python3-yaml
+        uuid-dev libnss3-dev sasl2-bin python3-yaml ntp ntpdate
+
+pip install -U pip
+pip install tox
 
 if false; then
 
@@ -143,7 +146,7 @@ system-config/install_puppet.sh && system-config/install_modules.sh
 ssh-keygen -N "" -t rsa -f /root/.ssh/id_rsa
 KEY_CONTENTS=$(cat /root/.ssh/id_rsa.pub | awk '{print $2}' )
 puppet apply --verbose --modulepath=/root/system-config/modules:/etc/puppet/modules \
-       -e 'class { openstack_project::single_use_slave: install_users => false, ssh_key => "${KEY_CONTENTS}" }'
+       -e 'class { openstack_project::single_use_slave: ssh_key => "${KEY_CONTENTS}" }'
 
 # # break the resolv.conf link
 # cp /etc/resolv.conf ~/resolv.conf
@@ -169,7 +172,16 @@ EOF
 # create the jenkins user
 #useradd -m jenkins
 #echo -e "password\npassword" | passwd jenkins
-#echo "jenkins ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/jenkins
+echo "jenkins ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/jenkins
+
+# BUG:
+#  devstack-gate setup_workspace fails with:
+# devstack-gate/functions.sh:setup_workspace:L521:   find /opt/stack/cache/files/ -mindepth 1 -maxdepth 1 -exec cp -l '{}' /opt/stack/new/devstack/files/ ';'
+# find: '/opt/stack/cache/files/': No such file or directory
+# so create /opt/stack/cache/files to avoid this error
+
+mkdir -p /opt/stack/cache/files
+chown -R jenkins:jenkins /opt/stack/cache/files
 
 echo "Setup completed!  Shutting down..."
 shutdown -t now
